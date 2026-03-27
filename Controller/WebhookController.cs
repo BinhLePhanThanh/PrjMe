@@ -18,13 +18,29 @@ public class ZaloWebhookController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Receive([FromBody] dynamic payload)
     {
-        string userId = payload.sender.id;
+        try
+        {
+            Console.WriteLine(payload?.ToString());
 
-        Console.WriteLine($"UserId: {userId}");
+            string? userId = payload?.sender?.id;
 
-        // TODO: lưu DB hoặc xử lý
-        _options.userId = userId;
-        return Ok();
+            if (!string.IsNullOrEmpty(userId))
+            {
+                _options.userId = userId;
+                Console.WriteLine($"UserId: {userId}");
+            }
+            else
+            {
+                Console.WriteLine("No sender.id");
+            }
+
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"ERROR: {ex.Message}");
+            return Ok(); // 🔥 QUAN TRỌNG: vẫn trả 200 cho Zalo
+        }
     }
     [HttpGet("/")]
     public ContentResult Home()
