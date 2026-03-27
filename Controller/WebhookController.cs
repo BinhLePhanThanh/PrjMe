@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 [Route("api/zalo/webhook")]
 public class ZaloWebhookController : ControllerBase
 {
-    private readonly TestIdOption _options;
+    private TestIdOption _options;
 
     public ZaloWebhookController(TestIdOption options)
     {
