@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 
 [ApiController]
 [Route("api/zalo/webhook")]
@@ -16,30 +17,25 @@ public class ZaloWebhookController : ControllerBase
         return Ok("OK");
     }
     [HttpPost]
-    public async Task<IActionResult> Receive([FromBody] dynamic payload)
+    public IActionResult Receive([FromBody] JsonElement payload)
     {
         try
         {
-            Console.WriteLine(payload?.ToString());
+            var userId = payload
+                .GetProperty("sender")
+                .GetProperty("id")
+                .GetString();
 
-            string? userId = payload?.sender?.id;
+            Console.WriteLine($"UserId: {userId}");
 
-            if (!string.IsNullOrEmpty(userId))
-            {
-                _options.userId = userId;
-                Console.WriteLine($"UserId: {userId}");
-            }
-            else
-            {
-                Console.WriteLine("No sender.id");
-            }
+            _options.userId = userId;
 
             return Ok();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"ERROR: {ex.Message}");
-            return Ok(); // 🔥 QUAN TRỌNG: vẫn trả 200 cho Zalo
+            Console.WriteLine(ex.Message);
+            return Ok();
         }
     }
     [HttpGet("/")]
