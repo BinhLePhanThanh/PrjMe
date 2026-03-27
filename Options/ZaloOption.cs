@@ -1,5 +1,8 @@
 public class ZaloOptions
 {
     public string AppId { get; set; }
-    public string AppSecret { get; set; }
+
+    public string Code { get; set; }              // dùng 1 lần
+    public string CodeVerifier { get; set; }      // PKCE
+    public string RefreshToken { get; set; }      // dùng lâu dài
 }

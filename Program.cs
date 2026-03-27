@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +11,8 @@ builder.Services.AddControllers();
 builder.Services.Configure<ZaloOptions>(
     builder.Configuration.GetSection("Zalo"));
 
+builder.Services.AddDbContext<AppDbContext>(opt =>
+    opt.UseSqlite("Data Source=zalo.db"));
 builder.Services.AddHttpClient<ZaloTokenService>();
 builder.Services.AddHttpClient<ZaloMessageService>();
 builder.Services.AddScoped<GoogleSheetService>();
