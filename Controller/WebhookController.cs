@@ -39,7 +39,7 @@ public class ZaloWebhookController : ControllerBase
             Console.WriteLine($"Received webhook from user {userId}");
             // chạy nền
             var message = payload.GetProperty("message").GetProperty("text").GetString();
-            if(message != "BAOCAO_GVCN")
+            if (message != "BAOCAO_GVCN")
             {
                 Console.WriteLine($"Received message '{message}' from user {userId}, ignoring...");
                 await _zaloService.SendTextMessageAsync(userId, "Hello! To get the report, please send the message 'BAOCAO_GVCN'.");
@@ -48,16 +48,28 @@ public class ZaloWebhookController : ControllerBase
             }
             _ = Task.Run(async () =>
             {
-                using var scope = _scopeFactory.CreateScope();
+                try
+                {
+                    using var scope = _scopeFactory.CreateScope();
 
-                var reportService = scope.ServiceProvider.GetRequiredService<ReportService>();
-                var fileService = scope.ServiceProvider.GetRequiredService<FileStorageService>();
-                var zaloService = scope.ServiceProvider.GetRequiredService<ZaloMessageService>();
-                Console.WriteLine($"Received message from user {userId}, preparing report...");
-                await zaloService.SendTextMessageAsync(userId, "Đang chuẩn bị báo cáo, vui lòng chờ trong giây lát...");
-                var fileBytes = await reportService.GenerateExcel();
-                var fileUrl = await fileService.SaveFile(fileBytes);
-                await zaloService.SendFileAsync(userId, fileUrl);
+                    var reportService = scope.ServiceProvider.GetRequiredService<ReportService>();
+                    var fileService = scope.ServiceProvider.GetRequiredService<FileStorageService>();
+                    var zaloService = scope.ServiceProvider.GetRequiredService<ZaloMessageService>();
+
+                    Console.WriteLine($"Processing report for {userId}");
+
+                    await zaloService.SendTextMessageAsync(userId, "Đang chuẩn bị báo cáo...");
+
+                    var fileBytes = await reportService.GenerateExcel();
+                    var fileUrl = await fileService.SaveFile(fileBytes);
+
+                    await zaloService.SendFileAsync(userId, fileUrl);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("🔥 TASK ERROR:");
+                    Console.WriteLine(ex.ToString());
+                }
             });
 
             return Ok(); // ⚡ trả ngay

@@ -11,7 +11,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace PrjMe.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260327194101_migEmpCode")]
+    [Migration("20260327194957_migEmpCode")]
     partial class migEmpCode
     {
         /// <inheritdoc />

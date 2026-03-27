@@ -1,6 +1,7 @@
 #!/bin/zsh
 dotnet ef migrations add migEmpCode
- dotnet ef database update
+
+dotnet ef database update
 set -e  # Dừng nếu có lỗi
 
 echo "🛠️ Building project..."

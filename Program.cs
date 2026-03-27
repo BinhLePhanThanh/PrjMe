@@ -27,7 +27,7 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-    await db.Database.ExecuteSqlRawAsync("DROP TABLE \"ZaloTokens\"");
+    //await db.Database.ExecuteSqlRawAsync("DROP TABLE \"ZaloTokens\"");
     //db.Database.EnsureCreated(); // 🔥 tạo lại
 
     Console.WriteLine("DB recreated");
