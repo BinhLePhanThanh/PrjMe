@@ -45,7 +45,7 @@ public class ZaloWebhookController : ControllerBase
                 var reportService = scope.ServiceProvider.GetRequiredService<ReportService>();
                 var fileService = scope.ServiceProvider.GetRequiredService<FileStorageService>();
                 var zaloService = scope.ServiceProvider.GetRequiredService<ZaloMessageService>();
-
+                await zaloService.SendTextMessageAsync(userId, "Đang chuẩn bị báo cáo, vui lòng chờ trong giây lát...");
                 var fileBytes = await reportService.GenerateExcel();
                 var fileUrl = await fileService.SaveFile(fileBytes);
                 await zaloService.SendFile(userId, fileUrl);
