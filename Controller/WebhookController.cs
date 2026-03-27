@@ -36,7 +36,7 @@ public class ZaloWebhookController : ControllerBase
                 .GetProperty("sender")
                 .GetProperty("id")
                 .GetString();
-
+            Console.WriteLine($"Received webhook from user {userId}");
             // chạy nền
             _ = Task.Run(async () =>
             {
@@ -45,6 +45,7 @@ public class ZaloWebhookController : ControllerBase
                 var reportService = scope.ServiceProvider.GetRequiredService<ReportService>();
                 var fileService = scope.ServiceProvider.GetRequiredService<FileStorageService>();
                 var zaloService = scope.ServiceProvider.GetRequiredService<ZaloMessageService>();
+                Console.WriteLine($"Received message from user {userId}, preparing report...");
                 await zaloService.SendTextMessageAsync(userId, "Đang chuẩn bị báo cáo, vui lòng chờ trong giây lát...");
                 var fileBytes = await reportService.GenerateExcel();
                 var fileUrl = await fileService.SaveFile(fileBytes);
