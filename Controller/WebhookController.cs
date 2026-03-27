@@ -27,7 +27,7 @@ public class ZaloWebhookController : ControllerBase
         var html = @"
     <html>
       <head>
-        <meta name='zalo-platform-site-verification' content='QDs_5eAZBWfxZhbHdh0uIckskNA7m6miE3W' />
+        <meta name='zalo-platform-site-verification' content='QDs_5eAZBWfxZhbHdh0uIckskNA7m6miE3Wv' />
       </head>
       <body>OK</body>
     </html>";
