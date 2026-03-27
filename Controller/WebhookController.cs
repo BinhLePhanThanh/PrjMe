@@ -57,7 +57,7 @@ public class ZaloWebhookController : ControllerBase
                 await zaloService.SendTextMessageAsync(userId, "Đang chuẩn bị báo cáo, vui lòng chờ trong giây lát...");
                 var fileBytes = await reportService.GenerateExcel();
                 var fileUrl = await fileService.SaveFile(fileBytes);
-                await zaloService.SendFile(userId, fileUrl);
+                await zaloService.SendFileAsync(userId, fileUrl);
             });
 
             return Ok(); // ⚡ trả ngay
@@ -85,6 +85,6 @@ public class ZaloWebhookController : ControllerBase
     {
         var fileBytes = await _reportService.GenerateExcel();
         var fileUrl = await _fileService.SaveFile(fileBytes);
-        await _zaloService.SendFile(userId, fileUrl);
+        await _zaloService.SendFileAsync(userId, fileUrl);
     }
 }

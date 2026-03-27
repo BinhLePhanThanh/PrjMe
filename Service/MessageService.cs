@@ -1,4 +1,7 @@
+using System;
+using System.Net.Http;
 using System.Text;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 
 public class ZaloMessageService
@@ -18,6 +21,12 @@ public class ZaloMessageService
 
     public async Task SendTextMessageAsync(string userId, string message)
     {
+        if (string.IsNullOrWhiteSpace(userId))
+            throw new ArgumentException("userId is required");
+
+        if (string.IsNullOrWhiteSpace(message))
+            throw new ArgumentException("message is required");
+
         var token = await _tokenService.GetAccessTokenAsync();
 
         var payload = new
@@ -33,6 +42,12 @@ public class ZaloMessageService
 
     public async Task SendFileAsync(string userId, string fileUrl)
     {
+        if (string.IsNullOrWhiteSpace(userId))
+            throw new ArgumentException("userId is required");
+
+        if (string.IsNullOrWhiteSpace(fileUrl))
+            throw new ArgumentException("fileUrl is required");
+
         var token = await _tokenService.GetAccessTokenAsync();
 
         var payload = new
@@ -58,7 +73,10 @@ public class ZaloMessageService
 
     private async Task SendAsync(string token, object payload, string logTag)
     {
-        var request = new HttpRequestMessage(HttpMethod.Post, MESSAGE_URL);
+        if (string.IsNullOrEmpty(token))
+            throw new Exception("Access token is null");
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, MESSAGE_URL);
 
         // 🔥 Zalo dùng header này (KHÔNG phải Bearer)
         request.Headers.Add("access_token", token);
@@ -69,7 +87,7 @@ public class ZaloMessageService
             "application/json"
         );
 
-        var response = await _http.SendAsync(request);
+        using var response = await _http.SendAsync(request);
         var result = await response.Content.ReadAsStringAsync();
 
         Console.WriteLine($"===== {logTag} RESPONSE =====");
