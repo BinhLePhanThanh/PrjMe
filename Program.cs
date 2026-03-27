@@ -12,8 +12,11 @@ builder.Services.Configure<ZaloOptions>(
 
 builder.Services.AddHttpClient<ZaloTokenService>();
 builder.Services.AddHttpClient<ZaloMessageService>();
+builder.Services.AddScoped<GoogleSheetService>();
+builder.Services.AddScoped<ReportService>();
+builder.Services.AddScoped<FileStorageService>();
 
-builder.Services.AddSingleton(sp =>
+builder.Services.AddSingleton<ZaloTokenService>(sp =>
 {
     var options = sp.GetRequiredService<IOptions<ZaloOptions>>().Value;
     return new ZaloTokenService(
