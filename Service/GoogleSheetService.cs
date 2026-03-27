@@ -1,7 +1,6 @@
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Services;
 using Google.Apis.Sheets.v4;
-using Google.Apis.Sheets.v4.Data;
 
 public class GoogleSheetService
 {
@@ -10,8 +9,16 @@ public class GoogleSheetService
 
     public GoogleSheetService()
     {
+        var json = Environment.GetEnvironmentVariable("GOOGLE_CREDENTIALS");
+
+        if (string.IsNullOrEmpty(json))
+            throw new Exception("GOOGLE_CREDENTIALS is missing");
+
+        // 🔥 QUAN TRỌNG: fix newline khi dùng ENV
+        json = json.Replace("\\n", "\n");
+
         var credential = GoogleCredential
-            .FromFile("credentials.json")
+            .FromJson(json)
             .CreateScoped(SheetsService.Scope.SpreadsheetsReadonly);
 
         _service = new SheetsService(new BaseClientService.Initializer()
@@ -28,6 +35,6 @@ public class GoogleSheetService
         var request = _service.Spreadsheets.Values.Get(_spreadsheetId, range);
         var response = await request.ExecuteAsync();
 
-        return response.Values;
+        return response.Values ?? new List<IList<object>>();
     }
 }
