@@ -14,7 +14,7 @@ builder.Services.Configure<ZaloOptions>(
 var dbPath = Path.Combine(AppContext.BaseDirectory, "zalo.db");
 
 builder.Services.AddDbContext<AppDbContext>(opt =>
-    opt.UseSqlite($"Data Source={dbPath}"));
+    opt.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 builder.Services.AddHttpClient<ZaloTokenService>();
 builder.Services.AddHttpClient<ZaloMessageService>();
 builder.Services.AddScoped<GoogleSheetService>();

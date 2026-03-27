@@ -13,12 +13,17 @@
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.17" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
 
-    <!-- ✅ ADD THESE -->
+    <!-- EF Core -->
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.8" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.8">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+
+    <!-- ❌ REMOVE SQLite -->
+    <!-- <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.8" /> -->
+
+    <!-- ✅ ADD PostgreSQL -->
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4" />
   </ItemGroup>
 
 </Project>

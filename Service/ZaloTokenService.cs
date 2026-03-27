@@ -145,4 +145,40 @@ public class ZaloTokenService
 
         return accessToken;
     }
+    public async Task ExchangeCodeFromCallbackAsync(string code)
+    {
+        var form = new Dictionary<string, string>
+        {
+            ["app_id"] = _options.AppId,
+            ["grant_type"] = "authorization_code",
+            ["code"] = code,
+            ["code_verifier"] = _options.CodeVerifier
+        };
+
+        var res = await _http.PostAsync(
+            "https://oauth.zaloapp.com/v4/oa/access_token",
+            new FormUrlEncodedContent(form)
+        );
+
+        var content = await res.Content.ReadAsStringAsync();
+
+        Console.WriteLine("CALLBACK EXCHANGE:");
+        Console.WriteLine(content);
+
+        if (!res.IsSuccessStatusCode)
+            throw new Exception($"Callback exchange failed: {content}");
+
+        var obj = JObject.Parse(content);
+
+        var accessToken = obj["access_token"]?.ToString();
+        var refreshToken = obj["refresh_token"]?.ToString();
+        int expiresIn = obj["expires_in"]?.Value<int>() ?? 3600;
+
+        if (string.IsNullOrEmpty(accessToken) || string.IsNullOrEmpty(refreshToken))
+            throw new Exception("Invalid callback token response");
+
+        await SaveTokenAsync(accessToken, refreshToken, expiresIn);
+
+        Console.WriteLine("🔥 CALLBACK TOKEN SAVED");
+    }
 }
