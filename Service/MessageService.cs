@@ -40,4 +40,33 @@ public class ZaloMessageService
             throw new Exception($"Zalo API error: {result}");
         }
     }
+    public async Task SendFile(string userId, string fileUrl)
+    {
+        var payload = new
+        {
+            recipient = new { user_id = userId },
+            message = new
+            {
+                attachment = new
+                {
+                    type = "file",
+                    payload = new
+                    {
+                        url = fileUrl
+                    }
+                }
+            }
+        };
+
+        var request = new HttpRequestMessage(HttpMethod.Post,
+            "https://openapi.zalo.me/v3.0/oa/message");
+
+        request.Headers.Add("access_token", _tokenService.GetAccessTokenAsync().Result);
+        request.Content = new StringContent(
+            System.Text.Json.JsonSerializer.Serialize(payload),
+            System.Text.Encoding.UTF8,
+            "application/json");
+
+        await _http.SendAsync(request);
+    }
 }

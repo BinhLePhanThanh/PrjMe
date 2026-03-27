@@ -23,7 +23,7 @@ public class GoogleSheetService
 
     public async Task<IList<IList<object>>> GetData()
     {
-        string range = "'BAOCAO'";
+        string range = "'BAOCAO_GVCN'";
 
         var request = _service.Spreadsheets.Values.Get(_spreadsheetId, range);
         var response = await request.ExecuteAsync();

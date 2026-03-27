@@ -6,10 +6,19 @@ using System.Text.Json;
 public class ZaloWebhookController : ControllerBase
 {
     private TestIdOption _options;
+    private GoogleSheetService _sheetService;
 
-    public ZaloWebhookController(TestIdOption options)
+    private readonly ReportService _reportService;
+    private readonly FileStorageService _fileService;
+    private readonly ZaloMessageService _zaloService;
+
+    public ZaloWebhookController(TestIdOption options, GoogleSheetService sheetService, ReportService reportService, FileStorageService fileService, ZaloMessageService zaloService)
     {
         _options = options;
+        _sheetService = sheetService;
+        _reportService = reportService;
+        _fileService = fileService;
+        _zaloService = zaloService;
     }
     [HttpGet]
     public IActionResult Verify()
@@ -17,7 +26,7 @@ public class ZaloWebhookController : ControllerBase
         return Ok("OK");
     }
     [HttpPost]
-    public IActionResult Receive([FromBody] JsonElement payload)
+    public async Task<IActionResult> Receive([FromBody] JsonElement payload)
     {
         try
         {
@@ -26,9 +35,13 @@ public class ZaloWebhookController : ControllerBase
                 .GetProperty("id")
                 .GetString();
 
-            Console.WriteLine($"UserId: {userId}");
+            var fileBytes = await _reportService.GenerateExcel();
 
-            _options.userId = userId;
+            // 2. Upload → lấy URL
+            var fileUrl = await _fileService.SaveFile(fileBytes);
+
+            // 3. Gửi qua Zalo
+            await _zaloService.SendFile(userId, fileUrl);
 
             return Ok();
         }

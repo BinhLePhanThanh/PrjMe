@@ -4,7 +4,7 @@ dotnet ef migrations add migEmpCode
 set -e  # Dừng nếu có lỗi
 
 echo "🛠️ Building project..."
-rm -rf ./publish && dotnet publish ./yMoi.csproj -c Release -o publish && cd publish && zip -r ../app.zip . > /dev/null && cd ..
+rm -rf ./publish && dotnet publish ./PrjMe.csproj -c Release -o publish && cd publish && zip -r ../app.zip . > /dev/null && cd ..
 
 # Đảm bảo file app.zip tồn tại và không bị ghi nữa
 # echo "⏳ Waiting for zip to finish..."
