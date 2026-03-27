@@ -7,15 +7,20 @@ public class ZaloTokenService
     private readonly HttpClient _http;
     private readonly ZaloOptions _options;
     private readonly AppDbContext _db;
+
+    private const string TOKEN_URL = "https://oauth.zaloapp.com/v4/access_token";
+
     public ZaloTokenService(
         HttpClient http,
         IOptions<ZaloOptions> options,
         AppDbContext db)
     {
         _http = http;
-        _options = options.Value; // 🔥 lấy Value ở đây
+        _options = options.Value;
         _db = db;
     }
+
+    // ================= DB =================
 
     private async Task<ZaloTokenEntity?> GetTokenAsync()
     {
@@ -39,6 +44,8 @@ public class ZaloTokenService
         await _db.SaveChangesAsync();
     }
 
+    // ================= MAIN =================
+
     public async Task<string> GetAccessTokenAsync()
     {
         var token = await GetTokenAsync();
@@ -49,102 +56,17 @@ public class ZaloTokenService
             return token.AccessToken;
         }
 
-        // 🔥 refresh token
+        // 🔥 refresh
         if (token != null && !string.IsNullOrEmpty(token.RefreshToken))
         {
             return await RefreshTokenAsync(token.RefreshToken);
         }
 
-        // 🔥 lần đầu (PKCE)
-        if (!string.IsNullOrEmpty(_options.Code) &&
-            !string.IsNullOrEmpty(_options.CodeVerifier))
-        {
-            return await ExchangeCodeAsync();
-        }
-
-        throw new Exception("No token available. Need Code + CodeVerifier or RefreshToken.");
+        throw new Exception("No token available. Need to authorize via callback first.");
     }
 
-    // 👉 Lấy token từ code (PKCE)
-    private async Task<string> ExchangeCodeAsync()
-    {
-        var form = new Dictionary<string, string>
-        {
-            ["app_id"] = _options.AppId,
-            ["grant_type"] = "authorization_code",
-            ["code"] = _options.Code,
-            ["code_verifier"] = _options.CodeVerifier
-        };
+    // ================= CALLBACK =================
 
-        var res = await _http.PostAsync(
-            "https://oauth.zaloapp.com/v4/oa/access_token",
-            new FormUrlEncodedContent(form)
-        );
-
-        var content = await res.Content.ReadAsStringAsync();
-
-        Console.WriteLine("EXCHANGE CODE RESPONSE:");
-        Console.WriteLine(content);
-
-        if (!res.IsSuccessStatusCode)
-            throw new Exception($"Exchange code failed: {content}");
-
-        var obj = JObject.Parse(content);
-
-        var accessToken = obj["access_token"]?.ToString();
-        var refreshToken = obj["refresh_token"]?.ToString();
-        int expiresIn = obj["expires_in"]?.Value<int>() ?? 3600;
-
-        if (string.IsNullOrEmpty(accessToken) || string.IsNullOrEmpty(refreshToken))
-            throw new Exception("Invalid token response");
-
-        // ✅ lưu DB luôn (KHÔNG chỉ log nữa)
-        await SaveTokenAsync(accessToken, refreshToken, expiresIn);
-
-        Console.WriteLine("🔥 INITIAL REFRESH TOKEN SAVED");
-
-        return accessToken;
-    }
-
-    // 👉 Refresh token
-    private async Task<string> RefreshTokenAsync(string refreshToken)
-    {
-        var form = new Dictionary<string, string>
-        {
-            ["app_id"] = _options.AppId,
-            ["grant_type"] = "refresh_token",
-            ["refresh_token"] = refreshToken
-        };
-
-        var res = await _http.PostAsync(
-            "https://oauth.zaloapp.com/v4/oa/refresh_token",
-            new FormUrlEncodedContent(form)
-        );
-
-        var content = await res.Content.ReadAsStringAsync();
-
-        Console.WriteLine("REFRESH RESPONSE:");
-        Console.WriteLine(content);
-
-        if (!res.IsSuccessStatusCode)
-            throw new Exception($"Refresh failed: {content}");
-
-        var obj = JObject.Parse(content);
-
-        var accessToken = obj["access_token"]?.ToString();
-        var newRefreshToken = obj["refresh_token"]?.ToString();
-        int expiresIn = obj["expires_in"]?.Value<int>() ?? 3600;
-
-        if (string.IsNullOrEmpty(accessToken) || string.IsNullOrEmpty(newRefreshToken))
-            throw new Exception("Invalid refresh response");
-
-        // 🔥 update DB (rotate token)
-        await SaveTokenAsync(accessToken, newRefreshToken, expiresIn);
-
-        Console.WriteLine("🔥 REFRESH TOKEN UPDATED");
-
-        return accessToken;
-    }
     public async Task ExchangeCodeFromCallbackAsync(string code)
     {
         var form = new Dictionary<string, string>
@@ -155,18 +77,15 @@ public class ZaloTokenService
             ["code_verifier"] = _options.CodeVerifier
         };
 
-        var res = await _http.PostAsync(
-            "https://oauth.zaloapp.com/v4/oa/access_token",
-            new FormUrlEncodedContent(form)
-        );
+        var request = new HttpRequestMessage(HttpMethod.Post, TOKEN_URL);
+        request.Headers.Add("secret_key", _options.SecretKey); // 🔥 QUAN TRỌNG
+        request.Content = new FormUrlEncodedContent(form);
 
+        var res = await _http.SendAsync(request);
         var content = await res.Content.ReadAsStringAsync();
 
         Console.WriteLine("CALLBACK EXCHANGE:");
         Console.WriteLine(content);
-
-        if (!res.IsSuccessStatusCode)
-            throw new Exception($"Callback exchange failed: {content}");
 
         var obj = JObject.Parse(content);
 
@@ -175,10 +94,47 @@ public class ZaloTokenService
         int expiresIn = obj["expires_in"]?.Value<int>() ?? 3600;
 
         if (string.IsNullOrEmpty(accessToken) || string.IsNullOrEmpty(refreshToken))
-            throw new Exception("Invalid callback token response");
+            throw new Exception($"Invalid callback token response: {content}");
 
         await SaveTokenAsync(accessToken, refreshToken, expiresIn);
 
         Console.WriteLine("🔥 CALLBACK TOKEN SAVED");
+    }
+
+    // ================= REFRESH =================
+
+    private async Task<string> RefreshTokenAsync(string refreshToken)
+    {
+        var form = new Dictionary<string, string>
+        {
+            ["app_id"] = _options.AppId,
+            ["grant_type"] = "refresh_token",
+            ["refresh_token"] = refreshToken
+        };
+
+        var request = new HttpRequestMessage(HttpMethod.Post, TOKEN_URL);
+        request.Headers.Add("secret_key", _options.SecretKey); // 🔥 QUAN TRỌNG
+        request.Content = new FormUrlEncodedContent(form);
+
+        var res = await _http.SendAsync(request);
+        var content = await res.Content.ReadAsStringAsync();
+
+        Console.WriteLine("REFRESH RESPONSE:");
+        Console.WriteLine(content);
+
+        var obj = JObject.Parse(content);
+
+        var accessToken = obj["access_token"]?.ToString();
+        var newRefreshToken = obj["refresh_token"]?.ToString();
+        int expiresIn = obj["expires_in"]?.Value<int>() ?? 3600;
+
+        if (string.IsNullOrEmpty(accessToken) || string.IsNullOrEmpty(newRefreshToken))
+            throw new Exception($"Invalid refresh response: {content}");
+
+        await SaveTokenAsync(accessToken, newRefreshToken, expiresIn);
+
+        Console.WriteLine("🔥 REFRESH TOKEN UPDATED");
+
+        return accessToken;
     }
 }
