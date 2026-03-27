@@ -9,7 +9,9 @@ public class ZaloMessageService
     private readonly HttpClient _http;
     private readonly ZaloTokenService _tokenService;
 
-    private const string MESSAGE_URL = "https://openapi.zalo.me/v3.0/oa/message/cs";
+    // 🔥 tách riêng 2 endpoint
+    private const string TEXT_URL = "https://openapi.zalo.me/v3.0/oa/message/cs";
+    private const string FILE_URL = "https://openapi.zalo.me/v3.0/oa/message";
 
     public ZaloMessageService(HttpClient http, ZaloTokenService tokenService)
     {
@@ -35,7 +37,7 @@ public class ZaloMessageService
             message = new { text = message }
         };
 
-        await SendAsync(token, payload, "SendText");
+        await SendAsync(token, payload, "SendText", TEXT_URL);
     }
 
     // ================= FILE =================
@@ -49,6 +51,8 @@ public class ZaloMessageService
             throw new ArgumentException("fileUrl is required");
 
         var token = await _tokenService.GetAccessTokenAsync();
+
+        Console.WriteLine("FILE URL: " + fileUrl); // debug
 
         var payload = new
         {
@@ -66,20 +70,21 @@ public class ZaloMessageService
             }
         };
 
-        await SendAsync(token, payload, "SendFile");
+        await SendAsync(token, payload, "SendFile", FILE_URL);
     }
 
     // ================= CORE =================
 
-    private async Task SendAsync(string token, object payload, string logTag)
+    private async Task SendAsync(string token, object payload, string logTag, string url)
     {
         if (string.IsNullOrEmpty(token))
             throw new Exception("Access token is null");
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, MESSAGE_URL);
+        using var request = new HttpRequestMessage(HttpMethod.Post, url);
 
-        // 🔥 Zalo dùng header này (KHÔNG phải Bearer)
-        request.Headers.Add("access_token", token);
+        // 🔥 header chuẩn của Zalo
+        request.Headers.Remove("access_token");
+        request.Headers.TryAddWithoutValidation("access_token", token);
 
         request.Content = new StringContent(
             JsonConvert.SerializeObject(payload),
