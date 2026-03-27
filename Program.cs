@@ -19,14 +19,7 @@ builder.Services.AddScoped<GoogleSheetService>();
 builder.Services.AddScoped<ReportService>();
 builder.Services.AddScoped<FileStorageService>();
 
-builder.Services.AddSingleton<ZaloTokenService>(sp =>
-{
-    var options = sp.GetRequiredService<IOptions<ZaloOptions>>().Value;
-    return new ZaloTokenService(
-        sp.GetRequiredService<HttpClient>(),
-        options
-    );
-});
+builder.Services.AddDbContext<AppDbContext>();
 builder.Services.AddSingleton<TestIdOption>();
 var app = builder.Build();
 
