@@ -11,14 +11,16 @@ public class ZaloWebhookController : ControllerBase
     private readonly ReportService _reportService;
     private readonly FileStorageService _fileService;
     private readonly ZaloMessageService _zaloService;
+    private readonly IServiceScopeFactory _scopeFactory;
 
-    public ZaloWebhookController(TestIdOption options, GoogleSheetService sheetService, ReportService reportService, FileStorageService fileService, ZaloMessageService zaloService)
+    public ZaloWebhookController(TestIdOption options, GoogleSheetService sheetService, ReportService reportService, FileStorageService fileService, ZaloMessageService zaloService, IServiceScopeFactory scopeFactory)
     {
         _options = options;
         _sheetService = sheetService;
         _reportService = reportService;
         _fileService = fileService;
         _zaloService = zaloService;
+        _scopeFactory = scopeFactory;
     }
     [HttpGet]
     public IActionResult Verify()
@@ -35,15 +37,21 @@ public class ZaloWebhookController : ControllerBase
                 .GetProperty("id")
                 .GetString();
 
-            var fileBytes = await _reportService.GenerateExcel();
+            // chạy nền
+            _ = Task.Run(async () =>
+            {
+                using var scope = _scopeFactory.CreateScope();
 
-            // 2. Upload → lấy URL
-            var fileUrl = await _fileService.SaveFile(fileBytes);
+                var reportService = scope.ServiceProvider.GetRequiredService<ReportService>();
+                var fileService = scope.ServiceProvider.GetRequiredService<FileStorageService>();
+                var zaloService = scope.ServiceProvider.GetRequiredService<ZaloMessageService>();
 
-            // 3. Gửi qua Zalo
-            await _zaloService.SendFile(userId, fileUrl);
+                var fileBytes = await reportService.GenerateExcel();
+                var fileUrl = await fileService.SaveFile(fileBytes);
+                await zaloService.SendFile(userId, fileUrl);
+            });
 
-            return Ok();
+            return Ok(); // ⚡ trả ngay
         }
         catch (Exception ex)
         {
@@ -63,5 +71,11 @@ public class ZaloWebhookController : ControllerBase
     </html>";
 
         return Content(html, "text/html");
+    }
+    private async Task Process(string userId)
+    {
+        var fileBytes = await _reportService.GenerateExcel();
+        var fileUrl = await _fileService.SaveFile(fileBytes);
+        await _zaloService.SendFile(userId, fileUrl);
     }
 }
