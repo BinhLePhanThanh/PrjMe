@@ -10,6 +10,11 @@ public class ZaloWebhookController : ControllerBase
     {
         _options = options;
     }
+    [HttpGet]
+    public IActionResult Verify()
+    {
+        return Ok("OK");
+    }
     [HttpPost]
     public async Task<IActionResult> Receive([FromBody] dynamic payload)
     {
