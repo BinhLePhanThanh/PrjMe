@@ -62,6 +62,7 @@ public class ZaloWebhookController : ControllerBase
 
                     var fileBytes = await reportService.GenerateExcel();
                     var fileUrl = await fileService.SaveFile(fileBytes);
+                    Console.WriteLine("FILE URL: " + fileUrl);
 
                     await zaloService.SendFileAsync(userId, fileUrl);
                 }
