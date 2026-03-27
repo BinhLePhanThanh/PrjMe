@@ -38,6 +38,14 @@ public class ZaloWebhookController : ControllerBase
                 .GetString();
             Console.WriteLine($"Received webhook from user {userId}");
             // chạy nền
+            var message = payload.GetProperty("message").GetProperty("text").GetString();
+            if(message != "BAOCAO_GVCN")
+            {
+                Console.WriteLine($"Received message '{message}' from user {userId}, ignoring...");
+                await _zaloService.SendTextMessageAsync(userId, "Hello! To get the report, please send the message 'BAOCAO_GVCN'.");
+
+                return Ok();
+            }
             _ = Task.Run(async () =>
             {
                 using var scope = _scopeFactory.CreateScope();
