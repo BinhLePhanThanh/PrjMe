@@ -11,8 +11,10 @@ builder.Services.AddControllers();
 builder.Services.Configure<ZaloOptions>(
     builder.Configuration.GetSection("Zalo"));
 
+var dbPath = Path.Combine(AppContext.BaseDirectory, "zalo.db");
+
 builder.Services.AddDbContext<AppDbContext>(opt =>
-    opt.UseSqlite("Data Source=zalo.db"));
+    opt.UseSqlite($"Data Source={dbPath}"));
 builder.Services.AddHttpClient<ZaloTokenService>();
 builder.Services.AddHttpClient<ZaloMessageService>();
 builder.Services.AddScoped<GoogleSheetService>();
