@@ -26,9 +26,11 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.EnsureCreated();
 
-    Console.WriteLine("DB Path: " + db.Database.GetDbConnection().DataSource);
+    await db.Database.ExecuteSqlRawAsync("DROP TABLE \"ZaloTokens\"");
+    //db.Database.EnsureCreated(); // 🔥 tạo lại
+
+    Console.WriteLine("DB recreated");
 }
 
 // Configure the HTTP request pipeline.
