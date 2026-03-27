@@ -2,10 +2,15 @@ public class FileStorageService
 {
     public async Task<string> SaveFile(byte[] fileBytes)
     {
-        var fileName = $"report_{DateTime.Now.Ticks}.xlsx";
-        var path = Path.Combine("wwwroot/files", fileName);
+        var folder = Path.Combine(AppContext.BaseDirectory, "wwwroot", "files");
 
-        await File.WriteAllBytesAsync(path, fileBytes);
+        // 🔥 tạo folder nếu chưa có
+        Directory.CreateDirectory(folder);
+
+        var fileName = $"report_{DateTime.UtcNow.Ticks}.xlsx";
+        var fullPath = Path.Combine(folder, fileName);
+
+        await File.WriteAllBytesAsync(fullPath, fileBytes);
 
         return $"https://prjme.onrender.com/files/{fileName}";
     }
