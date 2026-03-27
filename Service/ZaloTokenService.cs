@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 
 public class ZaloTokenService
@@ -6,12 +7,14 @@ public class ZaloTokenService
     private readonly HttpClient _http;
     private readonly ZaloOptions _options;
     private readonly AppDbContext _db;
-
-    public ZaloTokenService(HttpClient http, ZaloOptions options, AppDbContext db)
+    public ZaloTokenService(
+        HttpClient http,
+        IOptions<ZaloOptions> options,
+        AppDbContext db)
     {
         _http = http;
-        _options = options;
-        _db = db; // 🔥 FIX QUAN TRỌNG
+        _options = options.Value; // 🔥 lấy Value ở đây
+        _db = db;
     }
 
     private async Task<ZaloTokenEntity?> GetTokenAsync()

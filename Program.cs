@@ -19,7 +19,6 @@ builder.Services.AddScoped<GoogleSheetService>();
 builder.Services.AddScoped<ReportService>();
 builder.Services.AddScoped<FileStorageService>();
 
-builder.Services.AddDbContext<AppDbContext>();
 builder.Services.AddSingleton<TestIdOption>();
 var app = builder.Build();
 
