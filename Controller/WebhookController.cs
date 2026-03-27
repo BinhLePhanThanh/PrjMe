@@ -61,7 +61,9 @@ public class ZaloWebhookController : ControllerBase
                     await zaloService.SendTextMessageAsync(userId, "Đang chuẩn bị báo cáo...");
 
                     var fileBytes = await reportService.GenerateExcel();
-                    var fileUrl = await fileService.SaveFile(fileBytes);
+                    var cloudService = scope.ServiceProvider.GetRequiredService<CloudinaryService>();
+
+                    var fileUrl = await cloudService.UploadFileAsync(fileBytes);
                     Console.WriteLine("FILE URL: " + fileUrl);
 
                     await zaloService.SendFileAsync(userId, fileUrl);

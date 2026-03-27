@@ -20,7 +20,7 @@ builder.Services.AddHttpClient<ZaloMessageService>();
 builder.Services.AddScoped<GoogleSheetService>();
 builder.Services.AddScoped<ReportService>();
 builder.Services.AddScoped<FileStorageService>();
-
+builder.Services.AddSingleton<CloudinaryService>();
 builder.Services.AddSingleton<TestIdOption>();
 var app = builder.Build();
 using (var scope = app.Services.CreateScope())
