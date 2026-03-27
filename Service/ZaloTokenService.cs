@@ -1,6 +1,6 @@
-using System.Net.Http.Headers;
-using System.Text;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.Text;
 
 public class ZaloTokenService
 {
@@ -18,6 +18,7 @@ public class ZaloTokenService
 
     public async Task<string> GetAccessTokenAsync()
     {
+        // ✅ dùng cache
         if (!string.IsNullOrEmpty(_accessToken) && DateTime.UtcNow < _expiredAt)
         {
             return _accessToken;
@@ -39,12 +40,38 @@ public class ZaloTokenService
 
         var content = await response.Content.ReadAsStringAsync();
 
-        dynamic result = JsonConvert.DeserializeObject(content);
+        Console.WriteLine("TOKEN RESPONSE:");
+        Console.WriteLine(content);
 
-        _accessToken = result.access_token;
-        int expiresIn = result.expires_in;
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new Exception($"Token API error: {content}");
+        }
 
-        _expiredAt = DateTime.UtcNow.AddSeconds(expiresIn - 60); // trừ buffer
+        var obj = JObject.Parse(content);
+
+        // ✅ access_token
+        var token = obj["access_token"]?.ToString();
+
+        if (string.IsNullOrEmpty(token))
+        {
+            throw new Exception($"Invalid token response: {content}");
+        }
+
+        // ✅ expires_in (nullable safe)
+        int expiresIn = 3600; // default fallback
+
+        if (obj["expires_in"] != null && obj["expires_in"].Type != JTokenType.Null)
+        {
+            expiresIn = obj["expires_in"].Value<int>();
+        }
+        else
+        {
+            Console.WriteLine("⚠️ expires_in is null → using default 3600s");
+        }
+
+        _accessToken = token;
+        _expiredAt = DateTime.UtcNow.AddSeconds(expiresIn - 60);
 
         return _accessToken;
     }

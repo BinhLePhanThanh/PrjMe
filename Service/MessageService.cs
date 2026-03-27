@@ -42,6 +42,8 @@ public class ZaloMessageService
     }
     public async Task SendFile(string userId, string fileUrl)
     {
+        var token = await _tokenService.GetAccessTokenAsync();
+
         var payload = new
         {
             recipient = new { user_id = userId },
@@ -50,23 +52,32 @@ public class ZaloMessageService
                 attachment = new
                 {
                     type = "file",
-                    payload = new
-                    {
-                        url = fileUrl
-                    }
+                    payload = new { url = fileUrl }
                 }
             }
         };
 
-        var request = new HttpRequestMessage(HttpMethod.Post,
-            "https://openapi.zalo.me/v3.0/oa/message");
+        var request = new HttpRequestMessage(
+            HttpMethod.Post,
+            "https://openapi.zalo.me/v3.0/oa/message"
+        );
 
-        request.Headers.Add("access_token", _tokenService.GetAccessTokenAsync().Result);
+        request.Headers.Add("access_token", token);
         request.Content = new StringContent(
-            System.Text.Json.JsonSerializer.Serialize(payload),
-            System.Text.Encoding.UTF8,
-            "application/json");
+            JsonConvert.SerializeObject(payload),
+            Encoding.UTF8,
+            "application/json"
+        );
 
-        await _http.SendAsync(request);
+        var response = await _http.SendAsync(request);
+        var result = await response.Content.ReadAsStringAsync();
+
+        Console.WriteLine("SendFile response:");
+        Console.WriteLine(result);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new Exception($"Zalo send file error: {result}");
+        }
     }
 }
