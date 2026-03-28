@@ -65,8 +65,9 @@ public class ZaloWebhookController : ControllerBase
 
                     var fileUrl = await cloudService.UploadFileAsync(fileBytes);
                     Console.WriteLine("FILE URL: " + fileUrl);
+                    await zaloService.SendTextMessageAsync(userId, fileUrl);
 
-                    await zaloService.SendFileAsync(userId, fileUrl);
+                    //await zaloService.SendFileAsync(userId, fileUrl);
                 }
                 catch (Exception ex)
                 {
